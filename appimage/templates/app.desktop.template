@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=alien-works-demo
+Type=Application
+Categories=Game;
+Exec=app
+Icon=app

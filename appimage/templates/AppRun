@@ -1,0 +1,3 @@
+#!/bin/sh
+export ALIEN_WORKS_WORKDIR=$APPDIR
+exec $APPDIR/usr/bin/app $@
