@@ -125,13 +125,17 @@
     systems))
 
 
-(defun make-builder (base-system-name runner-symbol target-path)
+(defun make-builder (bundle base-system-name runner-symbol target-path)
   (with-output-to-file (out target-path :if-exists :supersede)
     (print-parameters out
-                      :runner-symbol (list (make-keyword (symbol-name runner-symbol))
-                                           (make-keyword (package-name
-                                                          (symbol-package runner-symbol))))
-                      :base-system-name base-system-name)
+                      :runner-symbol (if (and (symbolp runner-symbol)
+                                              (not (keywordp runner-symbol)))
+                                         (list (make-keyword (package-name
+                                                              (symbol-package runner-symbol)))
+                                               (make-keyword (symbol-name runner-symbol)))
+                                         runner-symbol)
+                      :base-system-name base-system-name
+                      :delivery-bundle-features (delivery-bundle-build-features bundle))
     (append-file out (merge-resource-pathname "delivery/scripts/builder.lisp"))))
 
 
@@ -183,6 +187,7 @@
 (defgeneric delivery-bundle-foreign-library-directory (bundle))
 (defgeneric delivery-bundle-asset-directory (bundle))
 (defgeneric delivery-bundle-executable-path (bundle))
+(defgeneric delivery-bundle-build-features (bundle))
 (defgeneric delivery-bundle-assembler-parameters (bundle))
 (defgeneric write-delivery-bundle-assembler-source (bundle stream))
 
@@ -205,7 +210,7 @@
     (copy-assets system-name assets (dir *delivery-bundle-directory*
                                          (delivery-bundle-asset-directory bundle)))
 
-    (make-builder system-name runner (file tmp-delivery-bundle-dir "builder.lisp"))
+    (make-builder bundle system-name runner (file tmp-delivery-bundle-dir "builder.lisp"))
 
     (make-bundler bundle (file tmp-delivery-bundle-dir "bundler.lisp"))
 

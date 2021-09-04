@@ -8,6 +8,7 @@
            #:delivery-bundle-foreign-library-directory
            #:delivery-bundle-asset-directory
            #:delivery-bundle-executable-path
+           #:delivery-bundle-build-features
            #:delivery-bundle-assembler-parameters
            #:write-delivery-bundle-assembler-source)
   (:local-nicknames (:awdb :alien-works-delivery-bundle)))

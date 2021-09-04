@@ -49,8 +49,8 @@
                                     :ignore-error-status t)
         (declare (ignore err))
         (if (= code 0)
-            (values std 0)
-            (values nil code))))))
+            std
+            (error "Shell command `~A` returned non-zero code (~A)" command code))))))
 
 
 (defun shout (control &rest params)

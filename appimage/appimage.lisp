@@ -71,3 +71,7 @@
                                         :alien-works-delivery/appimage
                                         "appimage/scripts/bundler.lisp"))
     (uiop:copy-stream-to-stream in stream)))
+
+
+(defmethod awd:delivery-bundle-build-features ((bundle appimage-bundle))
+  '(:appimage))

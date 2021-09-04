@@ -12,10 +12,14 @@
     (let ((tmp-work-dir (uiop:ensure-directory-pathname
                          (format nil "~A.dir/" (namestring tmp-work-dir)))))
       (ensure-directories-exist tmp-work-dir)
-      (unwind-protect
-           (uiop:with-current-directory (tmp-work-dir)
-             (uiop:run-program (list "tar" "-xzf" (namestring tmp-archive-file)))
-             (let ((cl-user::*target-directory* alien-works-delivery-bundle:*bundle-pathname*))
-               (load (merge-pathnames "delivery-bundle/build.lisp" tmp-work-dir))))
-        (uiop:delete-directory-tree tmp-work-dir :validate (constantly t)))))
-  (cl-user::quit))
+      (handler-case
+          (unwind-protect
+               (uiop:with-current-directory (tmp-work-dir)
+                 (uiop:run-program (list "tar" "-xzf" (namestring tmp-archive-file)))
+                 (let ((cl-user::*target-directory* alien-works-delivery-bundle:*bundle-pathname*))
+                   (load (merge-pathnames "delivery-bundle/build.lisp" tmp-work-dir))))
+            (uiop:delete-directory-tree tmp-work-dir :validate (constantly t)))
+        (serious-condition (c)
+          (format *error-output* "Bundle error: ~A~&" c)
+          (uiop:quit 1)))
+      (uiop:quit 0))))
