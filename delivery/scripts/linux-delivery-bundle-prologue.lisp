@@ -16,6 +16,6 @@
            (uiop:with-current-directory (tmp-work-dir)
              (uiop:run-program (list "tar" "-xzf" (namestring tmp-archive-file)))
              (let ((cl-user::*target-directory* alien-works-delivery-bundle:*bundle-pathname*))
-              (load (merge-pathnames "delivery-bundle/build.lisp" tmp-work-dir))))
+               (load (merge-pathnames "delivery-bundle/build.lisp" tmp-work-dir))))
         (uiop:delete-directory-tree tmp-work-dir :validate (constantly t)))))
   (cl-user::quit))

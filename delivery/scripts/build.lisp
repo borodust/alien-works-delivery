@@ -6,11 +6,21 @@
 ;; INPUT:
 ;;   *bundle-executable-path*
 ;;
+;; PROVIDED VIA BUNDLE:
+;;   *target-directory*
+;;
 (declaim (special *delivery-bundle-directory*
                   *target-bundle-directory*))
 
 (let ((work-dir (uiop:pathname-directory-pathname *load-pathname*))
-      (target-directory (uiop:pathname-directory-pathname cl-user::*target-directory*)))
+      (target-directory (uiop:pathname-directory-pathname *target-directory*))
+      (*load-verbose* nil)
+      (*compile-verbose* nil)
+      (*load-print* nil)
+      (*compile-print* nil)
+      (asdf:*user-cache* (merge-pathnames
+                          ".cache/"
+                          (uiop:pathname-directory-pathname *load-pathname*))))
   (apply #'shell (first (uiop:raw-command-line-arguments))
          (append
           (cond
