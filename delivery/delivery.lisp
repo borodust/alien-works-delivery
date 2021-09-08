@@ -55,47 +55,17 @@
                      :test #'equal))
 
 
-(defun read-distignore-predicate (path)
-  (when-let ((distignore-file (probe-file (file path ".distignore"))))
-    (labels ((trim-string (string)
-               (let ((string (if-let (pos (position #\# string))
-                               (subseq string 0 pos)
-                               string)))
-                 (string-trim '(#\Tab #\Space #\Newline) string))))
-      (let* ((regexes (split-sequence:split-sequence #\Newline
-                                                     (read-file-into-string distignore-file)))
-             (scanners (mapcar #'ppcre:create-scanner (remove-if #'emptyp
-                                                                 (mapcar #'trim-string regexes)))))
-        (lambda (string)
-          (let ((path (ensure-unix-namestring path))
-                (string (ensure-unix-namestring string)))
-            (when (starts-with-subseq path string)
-              (let ((subpath (string+ "/" (enough-namestring string path))))
-                (loop for scanner in scanners
-                        thereis (ppcre:scan scanner subpath))))))))))
-
-
-(defvar *exclusion-predicates* nil)
-
-
-(defun path-excluded-p (path)
-  (loop for pred in *exclusion-predicates*
-          thereis (funcall pred path)))
-
-
 (defun copy-directory (source destination)
   (let* ((source (dir source))
-         (destination (dir destination))
-         (*exclusion-predicates* (append (when-let ((pred (read-distignore-predicate source)))
-                                           (list pred))
-                                         *exclusion-predicates*)))
-    (ensure-directories-exist destination)
-    (when (uiop:directory-exists-p source)
-      (when-let (files (remove-if #'path-excluded-p (uiop:directory-files source)))
-        (unless (apply #'cp destination files)
-          (error "Failed to copy files into directory ~A" destination)))
-      (loop for dir in (remove-if #'path-excluded-p (uiop:subdirectories source))
-            do (copy-directory dir (dir destination (first (last (pathname-directory dir)))))))))
+         (destination (dir destination)))
+    (distignore:with-ignorable-directory (source)
+      (ensure-directories-exist destination)
+      (when (uiop:directory-exists-p source)
+        (when-let (files (remove-if #'distignore:pathname-ignored-p (uiop:directory-files source)))
+          (unless (apply #'cp destination files)
+            (error "Failed to copy files into directory ~A" destination)))
+        (loop for dir in (remove-if #'distignore:pathname-ignored-p (uiop:subdirectories source))
+              do (copy-directory dir (dir destination (first (last (pathname-directory dir))))))))))
 
 
 (defun make-asdf-registry (base-system-name target-directory &key (if-exists :error))

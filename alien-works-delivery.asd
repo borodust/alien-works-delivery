@@ -12,7 +12,7 @@
   :author "Pavel Korolev"
   :mailto "dev@borodust.org"
   :depends-on (:uiop :asdf :alexandria :cl-ppcre :split-sequence :alien-works-delivery-util
-               :bodge-blobs-support)
+               :bodge-blobs-support :distignore)
   :license "MIT"
   :pathname "delivery/"
   :components ((:file "packages")
