@@ -186,7 +186,7 @@
 
     (with-output-to-file (builder-stream (file tmp-delivery-bundle-dir "build.lisp")
                                          :if-exists :supersede)
-      (append-file builder-stream (asdf:system-relative-pathname :alien-works-delivery-util
+      (append-file builder-stream (asdf:system-relative-pathname :alien-works-delivery/util
                                                                  "util/uti.lisp"))
       (print-parameters builder-stream
                         :bundle-executable-path (delivery-bundle-executable-path bundle))

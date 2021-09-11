@@ -1,4 +1,4 @@
-(asdf:defsystem :alien-works-delivery-util
+(asdf:defsystem :alien-works-delivery/util
   :description "Utilities also embedded into delivery bundle"
   :author "Pavel Korolev"
   :mailto "dev@borodust.org"
@@ -11,7 +11,7 @@
   :description "Utility to ship alien-works based applications"
   :author "Pavel Korolev"
   :mailto "dev@borodust.org"
-  :depends-on (:uiop :asdf :alexandria :cl-ppcre :split-sequence :alien-works-delivery-util
+  :depends-on (:uiop :asdf :alexandria :cl-ppcre :split-sequence :alien-works-delivery/util
                :bodge-blobs-support :distignore)
   :license "MIT"
   :pathname "delivery/"

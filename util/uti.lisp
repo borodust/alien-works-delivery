@@ -64,7 +64,7 @@
 (defun dir (base &rest pathnames)
   (flet ((ensure-relative-dir (dir)
            (uiop:ensure-directory-pathname (uiop:enough-pathname dir "/"))))
-    (reduce #'merge-pathnames (mapcar #'ensure-relative-dir pathnames)
+    (reduce #'merge-pathnames (nreverse (mapcar #'ensure-relative-dir pathnames))
             :initial-value (uiop:ensure-directory-pathname base)
             :from-end t)))
 
