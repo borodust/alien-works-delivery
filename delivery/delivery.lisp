@@ -132,27 +132,19 @@
     (uiop:copy-stream-to-stream in stream :element-type element-type)))
 
 
-(defun copy-assets (system assets base-dir)
-  (labels ((%system-path (relative)
-             (asdf:system-relative-pathname system (uiop:relativize-pathname-directory relative)))
-           (%copy-asset (destination &rest sources)
-             (let* ((sources (loop for source in sources
-                                   collect (if (listp source)
-                                               (if (eq (first source) :system)
-                                                   (%system-path (second source))
-                                                   (error "Unrecognized asset source: ~A" source))
-                                               source)))
-                    (destination (merge-pathnames destination base-dir
-                                                  )))
-               (ensure-directories-exist destination)
-               (apply #'cp destination sources))))
+(defun copy-assets (assets base-dir)
+  (flet ((%copy-asset (destination source)
+           (let ((destination (merge-pathnames destination base-dir)))
+             (ensure-directories-exist destination)
+             (cp destination source))))
     (loop for asset in assets
-          do (apply #' %copy-asset (reverse asset)))))
+          when (typep asset 'bundle-file)
+            do (%copy-asset (bundle-file-destination asset) (bundle-file-source asset)))))
 
 
 (declaim (special *delivery-bundle-directory*))
 
-(defgeneric make-delivery-bundle (type system-name &key &allow-other-keys))
+(defgeneric make-delivery-bundle (type bundle-def &key &allow-other-keys))
 (defgeneric prepare-delivery-bundle (bundle))
 (defgeneric delivery-bundle-foreign-library-directory (bundle))
 (defgeneric delivery-bundle-asset-directory (bundle))
@@ -162,8 +154,9 @@
 (defgeneric write-delivery-bundle-assembler-source (bundle stream))
 
 
-(defun prepare-bundle (bundle system-name runner assets tmp-delivery-bundle-dir)
-  (let* ((*print-case* :downcase)
+(defun prepare-bundle (bundle bundle-def tmp-delivery-bundle-dir)
+  (let* ((system-name (bundle-system-name bundle-def))
+         (*print-case* :downcase)
          (*delivery-bundle-directory* (dir tmp-delivery-bundle-dir "bundle/")))
     (ensure-directories-exist tmp-delivery-bundle-dir)
     (ensure-directories-exist *delivery-bundle-directory*)
@@ -177,10 +170,14 @@
                                  (file tmp-delivery-bundle-dir "blobs.lisp")
                                  (delivery-bundle-foreign-library-directory bundle)))
 
-    (copy-assets system-name assets (dir *delivery-bundle-directory*
-                                         (delivery-bundle-asset-directory bundle)))
+    (copy-assets (bundle-assets bundle-def)
+                 (dir *delivery-bundle-directory*
+                      (delivery-bundle-asset-directory bundle)))
 
-    (make-builder bundle system-name runner (file tmp-delivery-bundle-dir "builder.lisp"))
+    (make-builder bundle
+                  system-name
+                  (bundle-entry-point bundle-def)
+                  (file tmp-delivery-bundle-dir "builder.lisp"))
 
     (make-bundler bundle (file tmp-delivery-bundle-dir "bundler.lisp"))
 
@@ -209,10 +206,12 @@
       (append-file bundle-out tmp-bundle-archive :element-type '(unsigned-byte 8)))))
 
 
-(defun assemble-delivery-bundle (type system runner bundle-path
-                                 &rest bundler-args &key assets &allow-other-keys)
-  (let ((bundle (apply #'make-delivery-bundle type system bundler-args)))
+(defun assemble-delivery-bundle (bundle-name type target-path
+                                 &rest bundler-args &key &allow-other-keys)
+  (let* ((bundle-def (find-bundle-definition bundle-name))
+         (bundle (apply #'make-delivery-bundle type bundle-def bundler-args)))
     (with-temporary-directory (:pathname tmp-delivery-bundle-dir)
-      (prepare-bundle bundle system runner assets
+      (prepare-bundle bundle
+                      bundle-def
                       (dir tmp-delivery-bundle-dir "delivery-bundle/") )
-      (write-bundle bundle-path tmp-delivery-bundle-dir))))
+      (write-bundle target-path tmp-delivery-bundle-dir))))

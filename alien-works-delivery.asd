@@ -17,6 +17,7 @@
   :pathname "delivery/"
   :components ((:file "packages")
                (:file "registry")
+               (:file "bundle")
                (:file "delivery")))
 
 

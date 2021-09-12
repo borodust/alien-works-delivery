@@ -10,5 +10,15 @@
            #:delivery-bundle-executable-path
            #:delivery-bundle-build-features
            #:delivery-bundle-assembler-parameters
-           #:write-delivery-bundle-assembler-source)
+           #:write-delivery-bundle-assembler-source
+
+           #:defbundle
+           #:bundle-assets
+           #:bundle-system-name
+           #:bundle-entry-point
+
+           #:bundle-file
+           #:bundle-file-source
+           #:bundle-file-destination
+           #:bundle-library)
   (:local-nicknames (:awdb :alien-works-delivery-bundle)))

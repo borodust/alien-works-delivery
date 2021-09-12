@@ -9,10 +9,13 @@
   ((output-filename :initarg :output-filename)))
 
 
-(defmethod awd:make-delivery-bundle ((type (eql :appimage)) system-name &key &allow-other-keys)
-  (make-instance 'appimage-bundle
-                 :output-filename (format nil "~A.AppImage"
-                                          (asdf:component-name (asdf:find-system system-name)))))
+(defmethod awd:make-delivery-bundle ((type (eql :appimage)) bundle-def &key &allow-other-keys)
+  (let ((output-name (substitute #\- #\/
+                                 (asdf:component-name
+                                  (asdf:find-system
+                                   (awd:bundle-system-name bundle-def))))))
+    (make-instance 'appimage-bundle
+                   :output-filename (format nil "~A.AppImage" output-name))))
 
 
 (defmethod awd:prepare-delivery-bundle ((bundle appimage-bundle))
