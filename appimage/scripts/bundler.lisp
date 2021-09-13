@@ -9,6 +9,7 @@
                           *target-bundle-directory*)))
   (shell "appimagetool" "--no-appstream"
          (merge-pathnames "AppDir/" *delivery-bundle-directory*)
-         (merge-pathnames
-          *bundler-output-filename*
-          (%system-path "./"))))
+         (or (provided-bundle-output-file)
+             (merge-pathnames
+              *bundler-output-filename*
+              (%system-path "./")))))

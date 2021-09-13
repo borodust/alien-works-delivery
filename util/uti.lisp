@@ -7,7 +7,8 @@
            #:dir
            #:file
            #:ensure-unix-namestring
-           #:with-temporary-directory))
+           #:with-temporary-directory
+           #:provided-bundle-output-file))
 (cl:defpackage :alien-works-delivery~pristine (:use))
 (cl:in-package :alien-works-delivery-util)
 (require 'uiop)
@@ -114,3 +115,8 @@
                 (ensure-directories-exist ,tmp-dir)
                 ,@body)
            (uiop:delete-directory-tree ,tmp-dir :validate (constantly t)))))))
+
+
+(defun provided-bundle-output-file ()
+  (uiop:if-let (out (uiop:getenv "AWD_BUNDLE_FILE"))
+    (file out)))
