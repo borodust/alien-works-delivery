@@ -12,22 +12,24 @@
 (declaim (special *delivery-bundle-directory*
                   *target-bundle-directory*))
 
-(let ((work-dir (uiop:pathname-directory-pathname *load-pathname*))
-      (target-directory (uiop:pathname-directory-pathname *target-directory*))
-      (*load-verbose* nil)
-      (*compile-verbose* nil)
-      (*load-print* nil)
-      (*compile-print* nil)
-      (asdf:*user-cache* (merge-pathnames
-                          ".cache/"
-                          (uiop:pathname-directory-pathname *load-pathname*))))
+(let* ((work-dir (uiop:pathname-directory-pathname *load-pathname*))
+       (target-directory (uiop:pathname-directory-pathname *target-directory*))
+       (*load-verbose* nil)
+       (*compile-verbose* nil)
+       (*load-print* nil)
+       (*compile-print* nil)
+       (asdf:*user-cache* (merge-pathnames
+                           ".cache/"
+                           (uiop:pathname-directory-pathname *load-pathname*)))
+       (registry-path (merge-pathnames "registry/registry.lisp" work-dir)))
+  (load registry-path)
   (apply #'shell (first (uiop:raw-command-line-arguments))
          (append
           (cond
             ((uiop:featurep :ccl) (list "--no-init"))
             ((uiop:featurep :sbcl) (list "--no-userinit"))
             ((uiop:featurep :ecl) (list "--norc")))
-          (list "--load" (merge-pathnames "registry/registry.lisp" work-dir)
+          (list "--load" registry-path
                 "--load" (merge-pathnames "builder.lisp" work-dir))))
   (let ((*delivery-bundle-directory* (dir work-dir "bundle/"))
         (*target-bundle-directory* target-directory))
