@@ -1,3 +1,5 @@
+#+ecl
+(require 'asdf)
 (require 'uiop)
 (declaim (special cl-user::*target-directory*))
 #!

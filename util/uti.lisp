@@ -11,6 +11,8 @@
            #:provided-bundle-output-file))
 (cl:defpackage :alien-works-delivery~pristine (:use))
 (cl:in-package :alien-works-delivery-util)
+
+(require 'asdf)
 (require 'uiop)
 
 
