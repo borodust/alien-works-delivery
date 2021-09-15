@@ -31,10 +31,13 @@
             ((uiop:featurep :ecl) (list "--norc")))
           (list "--load" registry-path
                 "--load" (merge-pathnames "builder.lisp" work-dir))))
-  (let ((*delivery-bundle-directory* (dir work-dir "bundle/"))
-        (*target-bundle-directory* target-directory))
+  (let* ((*delivery-bundle-directory* (dir work-dir "bundle/"))
+         (*target-bundle-directory* target-directory)
+         (target-executable (file *delivery-bundle-directory* *bundle-executable-path*)))
     (load (merge-pathnames "blobs.lisp" work-dir))
     (shell "cp" "-L"
            (file work-dir "app.bin")
-           (file *delivery-bundle-directory* *bundle-executable-path*))
+           target-executable)
+    (shell "chmod" "+x" target-executable)
+
     (load (merge-pathnames "bundler.lisp" work-dir))))
