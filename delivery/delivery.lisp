@@ -34,7 +34,7 @@
                  (loop for dep-name in (append (asdf:system-depends-on system)
                                                (asdf:system-weakly-depends-on system)
                                                (asdf:system-defsystem-depends-on system))
-                       for dep = (asdf:find-system (extract-dependency-name dep-name) nil)
+                       for dep = (asdf:find-system (extract-dependency-name dep-name) t)
                        when dep
                          do (let ((proper-dep-name (asdf:component-name dep)))
                               (when (not (gethash proper-dep-name dependency-table))
@@ -165,7 +165,6 @@
 
     (let ((systems (make-asdf-registry system-name
                                        (merge-pathnames "registry/" tmp-delivery-bundle-dir))))
-
       (make-bodge-blob-collector systems
                                  (file tmp-delivery-bundle-dir "blobs.lisp")
                                  (delivery-bundle-foreign-library-directory bundle)))
