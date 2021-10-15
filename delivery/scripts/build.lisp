@@ -21,8 +21,13 @@
        (asdf:*user-cache* (merge-pathnames
                            ".cache/"
                            (uiop:pathname-directory-pathname *load-pathname*)))
-       (registry-path (merge-pathnames "registry/registry.lisp" work-dir)))
+       (registry-path (merge-pathnames "registry/registry.lisp" work-dir))
+       (*delivery-bundle-directory* (dir work-dir "bundle/"))
+       (*target-bundle-directory* target-directory)
+       (target-executable (file *delivery-bundle-directory* *bundle-executable-path*)))
+  (shout "Loading registry.")
   (load registry-path)
+  (shout "Building executable.")
   (apply #'shell (first (uiop:raw-command-line-arguments))
          (append
           (cond
@@ -31,13 +36,14 @@
             ((uiop:featurep :ecl) (list "--norc")))
           (list "--load" registry-path
                 "--load" (merge-pathnames "builder.lisp" work-dir))))
-  (let* ((*delivery-bundle-directory* (dir work-dir "bundle/"))
-         (*target-bundle-directory* target-directory)
-         (target-executable (file *delivery-bundle-directory* *bundle-executable-path*)))
-    (load (merge-pathnames "blobs.lisp" work-dir))
-    (shell "cp" "-L"
-           (file work-dir "app.bin")
-           target-executable)
-    (shell "chmod" "+x" target-executable)
+  (shout "Moving executable to ~A" target-executable)
+  (mv target-executable (file work-dir "app.bin"))
+  (shout "Preparing foreign libraries.")
+  (load (merge-pathnames "blobs.lisp" work-dir))
 
-    (load (merge-pathnames "bundler.lisp" work-dir))))
+  (when (uiop:featurep :unix)
+    (shout "Ensure executable.")
+    (shell "chmod" "+x" target-executable))
+  (shout "Bundling.")
+  (load (merge-pathnames "bundler.lisp" work-dir))
+  (shout "Done."))

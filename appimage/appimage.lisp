@@ -39,17 +39,15 @@
         (ensure-directories-exist scalable-icon-dir)
         (ensure-directories-exist metadata-dir)
 
-        (awdu:shell "cp" (%system-path "appimage/templates/app.desktop.template") desktop-file)
-        (awdu:shell "cp" (%system-path "appimage/templates/app.svg") scalable-icon-file)
-        (awdu:shell "cp" (%system-path "appimage/templates/app.metainfo.xml") metadata-file)
-        (awdu:shell "cp" (%system-path "appimage/templates/AppRun") apprun-file)
+        (awdu:cp desktop-file (%system-path "appimage/templates/app.desktop.template"))
+        (awdu:cp scalable-icon-file (%system-path "appimage/templates/app.svg"))
+        (awdu:cp metadata-file (%system-path "appimage/templates/app.metainfo.xml"))
+        (awdu:cp apprun-file (%system-path "appimage/templates/AppRun"))
 
-        (awdu:shell "ln" "-s"
-                    (enough-namestring desktop-file bundle-dir)
-                    (%appdir-path "app.desktop"))
-        (awdu:shell "ln" "-s"
-                    (enough-namestring scalable-icon-file bundle-dir)
-                    (%appdir-path "app.svg"))))))
+        (awdu:ln (%appdir-path "app.desktop")
+                 (enough-namestring desktop-file bundle-dir))
+        (awdu:ln (%appdir-path "app.svg")
+                 (enough-namestring scalable-icon-file bundle-dir))))))
 
 
 (defmethod awd:delivery-bundle-foreign-library-directory ((bundle appimage-bundle))

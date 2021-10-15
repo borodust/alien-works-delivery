@@ -5,13 +5,6 @@
   (asdf:system-relative-pathname :alien-works-delivery relative))
 
 
-(defun cp (destination &rest sources)
-  (apply #'shell "/bin/cp" "-LR"
-         (append
-          sources
-          (list destination))))
-
-
 (defun print-parameters (stream &rest params &key &allow-other-keys)
   (let ((*package* (find-package :alien-works-delivery~pristine)))
     (loop for (param value) on params by #'cddr
@@ -75,7 +68,7 @@
          (target-directory (dir target-directory)))
     (when (uiop:directory-exists-p target-directory)
       (case if-exists
-        (:supersede (shell "rm" "-rf" target-directory))
+        (:supersede (rm target-directory))
         (:error (error "Directory exist: ~A" target-directory))))
 
     (ensure-directories-exist target-directory)
@@ -196,12 +189,11 @@
                              "delivery/scripts/header.lisp"))
     (append-file bundle-out (asdf:system-relative-pathname
                              :alien-works-delivery
-                             "delivery/scripts/linux-delivery-bundle-prologue.lisp")))
+                             "delivery/scripts/delivery-bundle-prologue.lisp")))
 
   (with-output-to-file (bundle-out bundle-path :if-exists :append :element-type '(unsigned-byte 8))
     (uiop:with-temporary-file (:pathname tmp-bundle-archive)
-      (uiop:with-current-directory (bundle-source-dir)
-        (shell "tar" "-czf" tmp-bundle-archive "delivery-bundle/"))
+      (compress tmp-bundle-archive (dir bundle-source-dir "delivery-bundle/"))
       (append-file bundle-out tmp-bundle-archive :element-type '(unsigned-byte 8)))))
 
 

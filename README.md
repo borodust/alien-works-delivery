@@ -1,8 +1,8 @@
 # alien-works-delivery
 
 WIP system for delivering Common Lisp applications as executable bundles. For
-now it only supports `AppImage` format for Linux, but I plan to add `MSIX` for
-Windows, `.APK` for Android and later MacOSX and iOS bundle formats.
+now it only supports `AppImage` format for Linux and `MSIX` for
+Windows, but `.APK` for Android and later MacOSX and iOS bundle formats are planned too.
 
 Delivery process is split into two stages:
 1. This system generates source bundle with required lisp sources to build an application

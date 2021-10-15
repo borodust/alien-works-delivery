@@ -6,6 +6,12 @@
            #:shout
            #:dir
            #:file
+           #:cp
+           #:rm
+           #:ln
+           #:mv
+           #:compress
+           #:decompress
            #:ensure-unix-namestring
            #:with-temporary-directory
            #:provided-bundle-output-file))
@@ -28,6 +34,11 @@
   (%ensure-package :alien-works-delivery-bundle))
 
 
+
+(defun windowsp ()
+  (some #'uiop:featurep '(:windows :win32)))
+
+
 (defun string* (control &rest args)
   (apply #'format nil control args))
 
@@ -36,32 +47,113 @@
   (format nil "~{~A~}" args))
 
 
-(defun shell (&rest args)
+(defun shell (command &rest args)
   (flet ((quote-arg (arg)
            (cond
+             ((and (windowsp)
+                   (stringp arg)
+                   (> (length arg) 0)
+                   (or (char= #\- (aref arg 0))
+                       (char= #\" (aref arg 0))))
+              arg)
              ((stringp arg) (string+ "\"" arg "\""))
              ((keywordp arg) (string* "~(~A~)" arg))
-             ((pathnamep arg) (string+ "'" (uiop:native-namestring arg) "'"))
+             ((pathnamep arg) (if (windowsp)
+                                  (string+ "\"" (uiop:native-namestring arg) "\"")
+                                  (string+ "'" (uiop:native-namestring arg) "'")))
              (t (string arg)))))
-    (let ((command (format nil "~{~A~^ ~}" (mapcar #'quote-arg args))))
+    (let ((command (format nil "~A ~{~A~^ ~}" command (mapcar #'quote-arg args)))
+          (shell (if (windowsp)
+                     (list "powershell" "-Command")
+                     (list "sh" "-c"))))
       (multiple-value-bind (std err code)
-          (uiop:run-program command :output (or *shell-output* :string)
-                                    :error-output (unless *supress-errors*
-                                                    *error-output*)
-                                    :force-shell t
-                                    :ignore-error-status t)
+          (uiop:run-program (nconc shell (list command))
+                            :output (or *shell-output* :string)
+                            :error-output (unless *supress-errors*
+                                            *error-output*)
+                            :force-shell nil
+                            :ignore-error-status t)
         (declare (ignore err))
         (if (= code 0)
             std
             (error "Shell command `~A` returned non-zero code (~A)" command code))))))
 
 
+(defun cp (destination source &rest sources)
+  (if (windowsp)
+      (shell "Copy-Item"
+             "-LiteralPath" (format nil "~{\"~A\"~^,~}" (list* source sources))
+             "-Destination" destination
+             "-Recurse")
+      (apply #'shell
+             "/bin/cp" "-LR"
+             (append
+              (list* source sources)
+              (list destination)))))
+
+
+(defun mv (destination source)
+  (if (windowsp)
+      (shell "Move-Item"
+             "-LiteralPath" source
+             "-Destination" destination
+             "-Force")
+      (shell "/bin/mv" source destination)))
+
+
+(defun compress (destination source)
+  (if (windowsp)
+      (let ((tmp-path (string+ source "~.zip")))
+        (shell "Compress-Archive"
+               "-LiteralPath" source
+               "-DestinationPath" tmp-path
+               "-Force")
+        (mv destination tmp-path))
+      (multiple-value-bind (parent source)
+          (if (uiop:file-pathname-p source)
+              (values (uiop:pathname-directory-pathname source) (file-namestring source))
+              (let ((parent (uiop:pathname-parent-directory-pathname source)))
+                (values parent (uiop:enough-pathname source parent))))
+        (uiop:with-current-directory (parent)
+          (shell "/bin/tar" "-czf" destination source)))))
+
+
+(defun decompress (destination source)
+  (let ((destination (uiop:ensure-directory-pathname destination)))
+    (if (windowsp)
+        (shell "Expand-Archive"
+               "-Path" source
+               "-DestinationPath" destination
+               "-Force")
+        (uiop:with-current-directory (destination)
+          (shell "/bin/tar" "-xzf" source)))))
+
+
+(defun rm (path)
+  (if (windowsp)
+      (shell "Remove-Item"
+             "-LiteralPath" path
+             "-Recurse"
+             "-Force")
+      (shell "/bin/rm" "-rm" path)))
+
+
+(defun ln (destination source)
+  (if (windowsp)
+      (shell "New-Item"
+             "-Path" destination
+             "-ItemType" "SymbolicLink"
+             "-Value" source
+             "-Force")
+      (shell "/bin/ln" "-s" source destination)))
+
+
 (defun shout (control &rest params)
   (handler-case
-      (format t "~&~A~&" (apply #'format nil control params))
+      (format *standard-output* "~&~A~&" (apply #'format nil control params))
     (serious-condition (c)
       (warn "Failed to shout `~A` with arguments ~A: ~A" control params c)))
-  (finish-output t))
+  (finish-output *standard-output*))
 
 
 (defun dir (base &rest pathnames)

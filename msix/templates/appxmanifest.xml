@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+    xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+    xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+    xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+  <Identity Name="org.borodust.lisp.alien-works-demo"
+            Version="1.0.0.0"
+            Publisher="CN=Alien-Works"
+            ProcessorArchitecture="x64" />
+  <Properties>
+    <DisplayName>Alien-Works Demo</DisplayName>
+    <PublisherDisplayName>Alien-Works</PublisherDisplayName>
+    <Description>Alien-Works demo for Windows 10 x64</Description>
+    <Logo>img\app150.png</Logo>
+  </Properties>
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.0.0" MaxVersionTested="10.0.0.0" />
+  </Dependencies>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust"/>
+  </Capabilities>
+  <Applications>
+    <Application Id="AlienWorksDemo"
+                 Executable="app.exe"
+                 EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements DisplayName="Alien-Works Demo"
+                          Description="Demo of alien-works"
+	                  Square150x150Logo="img\app150.png"
+			  Square44x44Logo="img\app44.png"
+	                  BackgroundColor="#283d54" />
+    </Application>
+  </Applications>
+</Package>
