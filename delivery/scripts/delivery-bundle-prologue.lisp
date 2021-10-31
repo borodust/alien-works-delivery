@@ -85,8 +85,8 @@
             (unless keep-extracted-p
               (uiop:delete-directory-tree tmp-work-dir :validate (constantly t))))
         (serious-condition (c)
-          (format *error-output* "~%Bundle error: ~A~&" c)
-          (finish-output *error-output*)
+          (format *standard-output* "~%Bundle error: ~A~&" c)
+          (finish-output *standard-output*)
           (uiop:quit 1 t)))
       (uiop:quit 0 t))))
 

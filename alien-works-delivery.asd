@@ -49,3 +49,13 @@
   :license "MIT"
   :pathname "archive/"
   :components ((:file "archive")))
+
+
+(asdf:defsystem :alien-works-delivery/android
+  :description "Plugin for alien-works-delivery to deliver android bundles"
+  :author "Pavel Korolev"
+  :mailto "dev@borodust.org"
+  :depends-on (:uiop :asdf :alexandria :alien-works-delivery)
+  :license "MIT"
+  :pathname "android/"
+  :components ((:file "android")))

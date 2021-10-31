@@ -2,6 +2,7 @@
   (:use :cl)
   (:export #:string*
            #:string+
+           #:with-shell-configuration
            #:shell
            #:shout
            #:dir
@@ -24,6 +25,7 @@
 
 (defvar *supress-errors* nil)
 (defvar *shell-output* nil)
+(defvar *print-shell-command* nil)
 
 
 (macrolet ((%ensure-package (name)
@@ -47,6 +49,23 @@
   (format nil "~{~A~}" args))
 
 
+(defmacro with-shell-configuration ((&key current-directory
+                                       supress-errors
+                                       shell-output
+                                       print-command)
+                                    &body body)
+  `(let (,@(when supress-errors
+             `((*supress-errors* ,supress-errors)))
+         ,@(when shell-output
+             `((*shell-output* ,shell-output)))
+         ,@(when print-command
+             `((*print-shell-command* ,print-command))))
+     (,@(if current-directory
+            `(uiop:with-current-directory (,current-directory))
+            '(progn))
+      ,@body)))
+
+
 (defun shell (command &rest args)
   (flet ((quote-arg (arg)
            (cond
@@ -62,12 +81,15 @@
                                   (string+ "\"" (uiop:native-namestring arg) "\"")
                                   (string+ "'" (uiop:native-namestring arg) "'")))
              (t (string arg)))))
-    (let ((command (format nil "~A ~{~A~^ ~}" command (mapcar #'quote-arg args)))
-          (shell (if (windowsp)
-                     (list "powershell" "-Command")
-                     (list "sh" "-c"))))
+    (let* ((command (format nil "~A ~{~A~^ ~}" command (mapcar #'quote-arg args)))
+           (shell (if (windowsp)
+                      (list "powershell" "-Command")
+                      (list "sh" "-c")))
+           (full-command (nconc shell (list command))))
+      (when *print-shell-command*
+        (shout "Executing `~A`" full-command))
       (multiple-value-bind (std err code)
-          (uiop:run-program (nconc shell (list command))
+          (uiop:run-program full-command
                             :output (or *shell-output* :string)
                             :error-output (unless *supress-errors*
                                             *error-output*)
@@ -212,5 +234,5 @@
 
 
 (defun provided-bundle-output-file ()
-  (uiop:if-let (out (uiop:getenv "AWD_BUNDLE_FILE"))
+  (uiop:if-let (out (uiop:getenv "ALIEN_WORKS_DELIVERY_BUNDLE_FILE"))
     (file out)))
