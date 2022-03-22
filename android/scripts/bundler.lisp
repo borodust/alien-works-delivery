@@ -31,7 +31,7 @@
                                     (file *delivery-bundle-directory*
                                           "../libLispWorks*.so")))))
         (shout "Copying LispWorks heap (~A) and shared library (~A)" heap-file shared-library)
-        (cp (dir app-dir "app/lib/arm64-v8a/") shared-library)
+        #++(cp (dir app-dir "app/lib/arm64-v8a/") shared-library)
         (cp (dir app-dir "app/src/main/assets/") heap-file)))
     (shout "Building .APK in ~A using Android SDK from `~A`." app-dir sdk-dir)
     (setf (uiop:getenv "ANDROID_SDK_ROOT") sdk-dir)

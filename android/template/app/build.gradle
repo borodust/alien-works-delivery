@@ -3,13 +3,13 @@ plugins {
 }
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
     buildToolsVersion "30.0.3"
 
     defaultConfig {
         applicationId "org.borodust.alienworks.android.demo"
         minSdkVersion 23
-        targetSdkVersion 30
+        targetSdkVersion 31
         versionCode 1
         versionName "1.0"
     }
@@ -24,8 +24,8 @@ android {
     }
 
     packagingOptions {
-        doNotStrip "*/arm64-v8a/*.so"
-        doNotStrip "*/armeabi-v7a/*.so"
+        doNotStrip "*/arm64-v8a/*.so*"
+        doNotStrip "*/armeabi-v7a/*.so*"
     }
 
     sourceSets.main {
@@ -40,7 +40,8 @@ android {
 
 dependencies {
     implementation files('alien-works-android.aar')
+    implementation files('lispworks.aar')
 
-    implementation 'androidx.core:core:1.3.2'
-    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.core:core:1.7.0'
+    implementation 'androidx.appcompat:appcompat:1.3.1'
 }
