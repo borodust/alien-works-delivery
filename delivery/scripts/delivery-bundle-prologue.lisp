@@ -40,22 +40,21 @@
 
 
 (defun deliver (work-dir)
-  (let (error)
-    (values
-     error
-     (with-output-to-string (err-out)
-       (handler-case
-           (uiop:with-temporary-file (:pathname builder-file)
-             (print-builder builder-file work-dir)
-             (uiop:run-program
-              (list (first (uiop:raw-command-line-arguments))
-                    "--load" (namestring builder-file))
-              :output *standard-output*
-              :error-output err-out))
-         (serious-condition (c)
-           (finish-output err-out)
-           (setf error c)))
-       (finish-output *standard-output*)))))
+  (let* (error
+         (out (with-output-to-string (err-out)
+                (handler-case
+                    (uiop:with-temporary-file (:pathname builder-file)
+                      (print-builder builder-file work-dir)
+                      (uiop:run-program
+                       (list (first (uiop:raw-command-line-arguments))
+                             "--load" (namestring builder-file))
+                       :output *standard-output*
+                       :error-output err-out))
+                  (serious-condition (c)
+                    (finish-output err-out)
+                    (setf error c)))
+                (finish-output *standard-output*))))
+    (values error out)))
 
 
 (defun process-embedded-delivery-bundle (tmp-archive-file)
@@ -85,8 +84,8 @@
             (unless keep-extracted-p
               (uiop:delete-directory-tree tmp-work-dir :validate (constantly t))))
         (serious-condition (c)
-          (format *error-output* "~%Bundle error: ~A~&" c)
-          (finish-output *error-output*)
+          (format *standard-output* "~%Bundle error: ~A~&" c)
+          (finish-output *standard-output*)
           (uiop:quit 1 t)))
       (uiop:quit 0 t))))
 

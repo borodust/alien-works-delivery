@@ -26,26 +26,42 @@
         (uiop:with-muffled-conditions ('(cl:warning))
           (uiop:with-muffled-compiler-conditions ()
             (uiop:with-muffled-loader-conditions ()
+              (pushnew :bodge-blobs-support-no-preload *features*)
               (asdf:load-system *base-system-name* :verbose nil)
+              (setf asdf:*central-registry* nil
+                    asdf:*user-cache* nil)
 
               #+ecl
-              (let ((result (first
-                             (asdf:make-build *base-system-name*
-                                              :type :program
-                                              :prologue-code `(progn
-                                                                (setf *features*
-                                                                      (append ',*delivery-bundle-features*
-                                                                              *features*)))
-                                              :epilogue-code `(progn
-                                                                (,(runner-symbol)))
-                                              :move-here (uiop:pathname-directory-pathname
-                                                          *load-pathname*)))))
+              (let ((result
+                      (first
+                       (asdf:make-build
+                        *base-system-name*
+                        :type :program
+                        :prologue-code `(progn
+                                          (setf *features*
+                                                (remove-duplicates
+                                                 (append ',*delivery-bundle-features*
+                                                         *features*))))
+                        :epilogue-code `(progn
+                                          (,(runner-symbol)))
+                        :move-here (uiop:pathname-directory-pathname
+                                    *load-pathname*)))))
                 (uiop:rename-file-overwriting-target result target-path))
 
-              #-ecl
+              #+(and lispworks android-delivery)
               (progn
                 (setf *features* (append *delivery-bundle-features* *features*))
-                (setf uiop:*image-entry-point* (runner-symbol))
+                (hcl:deliver-to-android-project nil
+                                                (uiop:pathname-directory-pathname *load-pathname*)
+                                                0
+                                                :no-sub-dir t))
+
+              #-(or ecl (and lispworks android-delivery))
+              (progn
+                (setf *features* (remove-duplicates
+                                  (append *delivery-bundle-features* *features*))
+                      uiop:*image-entry-point* (runner-symbol))
+                uiop:*image-entry-point*
                 (apply #'uiop:dump-image
                        target-path
                        :executable t
