@@ -3,6 +3,8 @@
   (:export #:assemble-delivery-bundle
 
            #:*delivery-bundle-directory*
+           #:*delivery-bundle-registry*
+           #:*delivery-bundle-systems*
            #:make-delivery-bundle
            #:prepare-delivery-bundle
            #:delivery-bundle-foreign-library-directory

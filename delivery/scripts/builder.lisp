@@ -13,15 +13,13 @@
                  (reverse (uiop:ensure-list *runner-symbol*))
                (intern (format nil "~A" symbol-name)
                        (uiop:ensure-package (or package-name :cl-user))))))
-      (let ((*load-verbose* nil)
-            (*compile-verbose* nil)
-            (*load-print* nil)
-            (*compile-print* nil)
-            (asdf:*user-cache* (merge-pathnames
-                                ".cache/"
-                                (uiop:pathname-directory-pathname *load-pathname*)))
-            (target-path (merge-pathnames "app.bin"
-                                          (uiop:pathname-directory-pathname *load-pathname*))))
+      (let* ((*load-verbose* nil)
+             (*compile-verbose* nil)
+             (*load-print* nil)
+             (*compile-print* nil)
+             (work-dir (uiop:getcwd))
+             (asdf:*user-cache* (merge-pathnames ".cache/" work-dir))
+             (target-path (merge-pathnames "app.bin" work-dir)))
 
         (uiop:with-muffled-conditions ('(cl:warning))
           (uiop:with-muffled-compiler-conditions ()
@@ -44,15 +42,14 @@
                                                          *features*))))
                         :epilogue-code `(progn
                                           (,(runner-symbol)))
-                        :move-here (uiop:pathname-directory-pathname
-                                    *load-pathname*)))))
+                        :move-here work-dir))))
                 (uiop:rename-file-overwriting-target result target-path))
 
               #+(and lispworks android-delivery)
               (progn
                 (setf *features* (append *delivery-bundle-features* *features*))
                 (hcl:deliver-to-android-project nil
-                                                (uiop:pathname-directory-pathname *load-pathname*)
+                                                work-dir
                                                 0
                                                 :no-sub-dir t))
 

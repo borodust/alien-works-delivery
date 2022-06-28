@@ -10,7 +10,7 @@
 ;;   *target-features*
 ;;
 (when *bodge-blob-systems*
-  (ql:quickload :bodge-blobs-support))
+  (asdf:load-system :bodge-blobs-support))
 
 (when *bodge-blob-systems*
   (let ((dst-dir (dir *delivery-bundle-directory* *foreign-library-dir*))

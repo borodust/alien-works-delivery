@@ -9,7 +9,7 @@
   ((output-filename :initarg :output-filename)))
 
 
-(defmethod awd:make-delivery-bundle ((type (eql :msix)) bundle-def &key &allow-other-keys)
+(defmethod awd:make-delivery-bundle ((type (eql :msix)) bundle-def)
   (let ((output-name (substitute #\- #\/
                                  (asdf:component-name
                                   (asdf:find-system

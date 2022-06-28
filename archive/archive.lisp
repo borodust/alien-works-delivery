@@ -10,7 +10,7 @@
    (name :initarg :name)))
 
 
-(defmethod awd:make-delivery-bundle ((type (eql :archive)) bundle-def &key &allow-other-keys)
+(defmethod awd:make-delivery-bundle ((type (eql :archive)) bundle-def)
   (let ((output-name (substitute #\- #\/
                                  (asdf:component-name
                                   (asdf:find-system

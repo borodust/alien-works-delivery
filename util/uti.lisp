@@ -36,7 +36,6 @@
   (%ensure-package :alien-works-delivery-bundle))
 
 
-
 (defun windowsp ()
   (some #'uiop:featurep '(:windows :win32)))
 
@@ -120,6 +119,8 @@
 
 
 (defun cp (destination source &rest sources)
+  (ensure-directories-exist
+   (uiop:pathname-directory-pathname destination))
   (if (windowsp)
       (shell "Copy-Item"
              "-LiteralPath" (format nil "~{\"~A\"~^,~}" (list* source sources))
@@ -133,6 +134,8 @@
 
 
 (defun mv (destination source)
+  (ensure-directories-exist
+   (uiop:pathname-directory-pathname destination))
   (if (windowsp)
       (shell "Move-Item"
              "-LiteralPath" source
@@ -175,7 +178,7 @@
              "-LiteralPath" path
              "-Recurse"
              "-Force")
-      (shell "/bin/rm" "-rm" path)))
+      (shell "/bin/rm" "-rf" path)))
 
 
 (defun ln (destination source)
@@ -189,11 +192,12 @@
 
 
 (defun shout (control &rest params)
-  (handler-case
-      (format *standard-output* "~&~A~&" (apply #'format nil control params))
-    (serious-condition (c)
-      (warn "Failed to shout `~A` with arguments ~A: ~A" control params c)))
-  (finish-output *standard-output*))
+  (unwind-protect
+       (handler-case
+           (format *standard-output* "~&~A~&" (apply #'format nil control params))
+         (serious-condition (c)
+           (warn "Failed to shout `~A` with arguments ~A: ~A" control params c)))
+    (finish-output *standard-output*)))
 
 
 (defun dir (base &rest pathnames)

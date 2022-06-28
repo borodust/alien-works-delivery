@@ -8,6 +8,8 @@
 ;;
 ;; PROVIDED VIA BUNDLE:
 ;;   *target-directory*
+;;   *working-directory*
+;;   *bundle-directory*
 ;;
 (defun provided-target-features ()
   (flet ((make-keyword (name)
@@ -25,17 +27,18 @@
                   *target-features*))
 
 (with-shell-configuration (:print-command t
-                           :shell-output *standard-output*)
-  (let* ((work-dir (uiop:pathname-directory-pathname *load-pathname*))
-         (target-directory (uiop:pathname-directory-pathname *target-directory*))
+                           :shell-output *standard-output*
+                           :current-directory *working-directory*)
+  (let* ((work-dir *working-directory*)
+         (bundle-dir *bundle-directory*)
+         (target-directory (uiop:ensure-directory-pathname *target-directory*))
          (*load-verbose* nil)
          (*compile-verbose* nil)
          (*load-print* nil)
          (*compile-print* nil)
-         (asdf:*user-cache* (merge-pathnames
-                             ".cache/"
-                             (uiop:pathname-directory-pathname *load-pathname*)))
-         (registry-path (merge-pathnames "registry/registry.lisp" work-dir))
+         (asdf:*user-cache* (merge-pathnames ".cache/" work-dir))
+         (registry-path (merge-pathnames "../../registry/registry.lisp"
+                                         *bundle-directory*))
          (*delivery-bundle-directory* (dir work-dir "bundle/"))
          (*target-bundle-directory* target-directory)
          (*target-features* (or (provided-target-features) *features*))
@@ -72,9 +75,9 @@
             (if (eq *builder-implementation* :lispworks)
                 (list "-eval" "(lispworks::load-all-patches)"
                       "-load" registry-path
-                      "-build" (merge-pathnames "builder.lisp" work-dir))
+                      "-build" (merge-pathnames "builder.lisp" bundle-dir))
                 (list "--load" registry-path
-                      "--load" (merge-pathnames "builder.lisp" work-dir)))))
+                      "--load" (merge-pathnames "builder.lisp" bundle-dir)))))
     (when (uiop:file-pathname-p target-executable-path)
       (shout "Moving executable to ~A" target-executable-path)
       (mv target-executable-path (file work-dir "app.bin"))
@@ -83,8 +86,8 @@
         (shell "chmod" "+x" target-executable-path)))
 
     (shout "Preparing foreign libraries.")
-    (load (merge-pathnames "blobs.lisp" work-dir))
+    (load (merge-pathnames "blobs.lisp" bundle-dir))
 
     (shout "Bundling.")
-    (load (merge-pathnames "bundler.lisp" work-dir))
+    (load (merge-pathnames "bundler.lisp" bundle-dir))
     (shout "Done.")))

@@ -135,9 +135,11 @@
             do (%copy-asset (bundle-file-destination asset) (bundle-file-source asset)))))
 
 
-(declaim (special *delivery-bundle-directory*))
+(declaim (special *delivery-bundle-directory*
+                  *delivery-bundle-registry*
+                  *delivery-bundle-systems*))
 
-(defgeneric make-delivery-bundle (type bundle-def &key &allow-other-keys))
+(defgeneric make-delivery-bundle (type bundle-def))
 (defgeneric prepare-delivery-bundle (bundle))
 (defgeneric delivery-bundle-foreign-library-directory (bundle))
 (defgeneric delivery-bundle-asset-directory (bundle))
@@ -147,62 +149,75 @@
 (defgeneric write-delivery-bundle-assembler-source (bundle stream))
 
 
-(defun prepare-bundle (bundle bundle-def tmp-delivery-bundle-dir)
+(defun prepare-bundle-commons (bundle-def delivery-bundle-dir)
   (let* ((system-name (bundle-system-name bundle-def))
-         (*print-case* :downcase)
-         (*delivery-bundle-directory* (dir tmp-delivery-bundle-dir "bundle/")))
-    (ensure-directories-exist tmp-delivery-bundle-dir)
+         (*print-case* :downcase))
+    (ensure-directories-exist delivery-bundle-dir)
+
+    (with-output-to-file (builder-stream (file delivery-bundle-dir "deliver.lisp")
+                                         :if-exists :supersede)
+      (append-file builder-stream
+                   (asdf:system-relative-pathname :alien-works-delivery/util
+                                                  "util/uti.lisp"))
+      (append-file builder-stream
+                   (merge-resource-pathname "delivery/scripts/deliver.lisp")))
+
+    (make-asdf-registry system-name
+                        (merge-pathnames "registry/"
+                                         delivery-bundle-dir))))
+
+(defun prepare-bundle (bundle system-name entry-point assets
+                       systems delivery-bundle-dir)
+  (let ((*print-case* :downcase))
     (ensure-directories-exist *delivery-bundle-directory*)
 
     (prepare-delivery-bundle bundle)
 
-    (let ((systems (make-asdf-registry system-name
-                                       (merge-pathnames "registry/" tmp-delivery-bundle-dir))))
-      (make-bodge-blob-collector systems
-                                 (file tmp-delivery-bundle-dir "blobs.lisp")
-                                 (delivery-bundle-foreign-library-directory bundle)))
+    (make-bodge-blob-collector systems
+                               (file delivery-bundle-dir "blobs.lisp")
+                               (delivery-bundle-foreign-library-directory bundle))
 
-    (copy-assets (bundle-assets bundle-def)
+    (copy-assets assets
                  (dir *delivery-bundle-directory*
                       (delivery-bundle-asset-directory bundle)))
 
     (make-builder bundle
                   system-name
-                  (bundle-entry-point bundle-def)
-                  (file tmp-delivery-bundle-dir "builder.lisp"))
+                  entry-point
+                  (file delivery-bundle-dir "builder.lisp"))
 
-    (make-bundler bundle (file tmp-delivery-bundle-dir "bundler.lisp"))
+    (make-bundler bundle (file delivery-bundle-dir "bundler.lisp"))
 
-    (with-output-to-file (builder-stream (file tmp-delivery-bundle-dir "build.lisp")
+    (with-output-to-file (builder-stream (file delivery-bundle-dir "build.lisp")
                                          :if-exists :supersede)
-      (append-file builder-stream (asdf:system-relative-pathname :alien-works-delivery/util
-                                                                 "util/uti.lisp"))
       (print-parameters builder-stream
                         :bundle-executable-path (delivery-bundle-executable-path bundle))
-      (append-file builder-stream (merge-resource-pathname "delivery/scripts/build.lisp")))))
+      (append-file builder-stream
+                   (merge-resource-pathname "delivery/scripts/build.lisp")))))
 
 
 (defun write-bundle (bundle-path bundle-source-dir)
-  (with-output-to-file (bundle-out bundle-path :if-exists :supersede)
-    (append-file bundle-out (asdf:system-relative-pathname
-                             :alien-works-delivery
-                             "delivery/scripts/header.lisp"))
-    (append-file bundle-out (asdf:system-relative-pathname
-                             :alien-works-delivery
-                             "delivery/scripts/delivery-bundle-prologue.lisp")))
-
-  (with-output-to-file (bundle-out bundle-path :if-exists :append :element-type '(unsigned-byte 8))
-    (uiop:with-temporary-file (:pathname tmp-bundle-archive)
-      (compress tmp-bundle-archive (dir bundle-source-dir "delivery-bundle/"))
-      (append-file bundle-out tmp-bundle-archive :element-type '(unsigned-byte 8)))))
+  (compress bundle-path (dir bundle-source-dir "delivery-bundle/")))
 
 
-(defun assemble-delivery-bundle (bundle-name type target-path
-                                 &rest bundler-args &key &allow-other-keys)
-  (let* ((bundle-def (find-bundle-definition bundle-name))
-         (bundle (apply #'make-delivery-bundle type bundle-def bundler-args)))
+(defun assemble-delivery-bundle (bundle-name target-path &rest types)
+  (let ((bundle-def (find-bundle-definition bundle-name)))
     (with-temporary-directory (:pathname tmp-delivery-bundle-dir)
-      (prepare-bundle bundle
-                      bundle-def
-                      (dir tmp-delivery-bundle-dir "delivery-bundle/") )
+      (let ((delivery-bundle-dir (dir tmp-delivery-bundle-dir "delivery-bundle/")))
+        (multiple-value-bind (systems)
+            (prepare-bundle-commons bundle-def delivery-bundle-dir)
+          (loop for bundle-type in types
+                do (let* ((type-str (ppcre:regex-replace-all
+                                     "[\\/]"
+                                     (format nil "~(~A~)" bundle-type)
+                                     "-"))
+                          (bundle-dir (dir delivery-bundle-dir "bundles/" type-str))
+                          (*delivery-bundle-directory* bundle-dir)
+                          (bundle (make-delivery-bundle bundle-type bundle-def)))
+                     (prepare-bundle bundle
+                                     (bundle-system-name bundle-def)
+                                     (bundle-entry-point bundle-def)
+                                     (bundle-assets bundle-def)
+                                     systems
+                                     bundle-dir)))))
       (write-bundle target-path tmp-delivery-bundle-dir))))
