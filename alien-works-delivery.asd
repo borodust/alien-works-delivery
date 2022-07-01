@@ -11,7 +11,7 @@
   :description "Utility to ship alien-works based applications"
   :author "Pavel Korolev"
   :mailto "dev@borodust.org"
-  :depends-on (:uiop :asdf :alexandria :cl-ppcre :split-sequence :alien-works-delivery/util
+  :depends-on (:uiop :asdf :alexandria :cl-ppcre :alien-works-delivery/util
                :bodge-blobs-support :distignore :trivial-features)
   :license "MIT"
   :pathname "delivery/"
