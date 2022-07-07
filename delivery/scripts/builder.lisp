@@ -7,6 +7,9 @@
 ;;   *base-system-name*
 ;;
 
+#+sbcl
+(declaim (sb-ext:muffle-conditions sb-ext:compiler-note))
+
 (handler-case
     (flet ((runner-symbol ()
              (destructuring-bind (symbol-name &optional package-name)

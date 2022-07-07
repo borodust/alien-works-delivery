@@ -17,7 +17,8 @@
   (alien-works-delivery-util:with-temporary-directory (:pathname work-dir)
     (let* ((bundle-type (first (uiop:command-line-arguments)))
            (root-dir (uiop:pathname-directory-pathname *load-pathname*))
-           (target-dir root-dir)
+           (target-dir (or (uiop:getenv "ALIEN_WORKS_DELIVERY_TARGET_DIR")
+                           root-dir))
            (bundle-dir (uiop:ensure-directory-pathname
                         (merge-pathnames
                          bundle-type
@@ -25,7 +26,7 @@
       (when (uiop:emptyp bundle-type)
         (error "Bundle type must be specified."))
       (shout "Delivering from ~A to ~A" bundle-dir target-dir)
-      (setf *working-directory* (or (uiop:getenv "ALIEN_WORKS_DELIVERY_WORKDIR")
+      (setf *working-directory* (or (uiop:getenv "ALIEN_WORKS_DELIVERY_WORK_DIR")
                                     work-dir)
             *target-directory* target-dir
             *bundle-directory* bundle-dir)
