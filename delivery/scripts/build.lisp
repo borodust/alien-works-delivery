@@ -41,7 +41,6 @@
                                          *bundle-directory*))
          (*delivery-bundle-directory* (dir work-dir "bundle/"))
          (*target-bundle-directory* target-directory)
-         (*target-features* (or (provided-target-features) *features*))
          (target-executable-path (when *bundle-executable-path*
                                    (merge-pathnames *bundle-executable-path*
                                                     *delivery-bundle-directory*)))
@@ -59,35 +58,41 @@
                                           (t (error "Unsupported builder implementation: ~A"
                                                     (uiop:implementation-identifier))))))))
 
-    (shout "Target features: ~{~A~^, ~}" *target-features*)
     (shout "Loading registry.")
     (load registry-path)
-    (shout "Building executable.")
-    (apply #'shell (or
-                    (uiop:getenv "ALIEN_WORKS_DELIVERY_LISP")
-                    (first (uiop:raw-command-line-arguments)))
-           (append
-            (ecase *builder-implementation*
-              (:ccl (list "--no-init"))
-              (:sbcl (list "--no-userinit"))
-              (:ecl (list "--norc"))
-              (:lispworks (list "-init" "-")))
-            (if (eq *builder-implementation* :lispworks)
-                (list "-eval" "(lispworks::load-all-patches)"
-                      "-load" registry-path
-                      "-build" (merge-pathnames "builder.lisp" bundle-dir))
-                (list "--load" registry-path
-                      "--load" (merge-pathnames "builder.lisp" bundle-dir)))))
-    (when (uiop:file-pathname-p target-executable-path)
-      (shout "Moving executable to ~A" target-executable-path)
-      (mv target-executable-path (file work-dir "app.bin"))
-      (when (uiop:featurep :unix)
-        (shout "Ensure executable.")
-        (shell "chmod" "+x" target-executable-path)))
 
-    (shout "Preparing foreign libraries.")
-    (load (merge-pathnames "blobs.lisp" bundle-dir))
+    (when (asdf:find-system :trivial-features nil)
+      (asdf:load-system :trivial-features))
 
-    (shout "Bundling.")
-    (load (merge-pathnames "bundler.lisp" bundle-dir))
-    (shout "Done.")))
+    (let ((*target-features* (or (provided-target-features) *features*)))
+      (shout "Target features: ~{~A~^, ~}" *target-features*)
+
+      (shout "Building executable.")
+      (apply #'shell (or
+                      (uiop:getenv "ALIEN_WORKS_DELIVERY_LISP")
+                      (first (uiop:raw-command-line-arguments)))
+             (append
+              (ecase *builder-implementation*
+                (:ccl (list "--no-init"))
+                (:sbcl (list "--no-userinit"))
+                (:ecl (list "--norc"))
+                (:lispworks (list "-init" "-")))
+              (if (eq *builder-implementation* :lispworks)
+                  (list "-eval" "(lispworks::load-all-patches)"
+                        "-load" registry-path
+                        "-build" (merge-pathnames "builder.lisp" bundle-dir))
+                  (list "--load" registry-path
+                        "--load" (merge-pathnames "builder.lisp" bundle-dir)))))
+      (when (uiop:file-pathname-p target-executable-path)
+        (shout "Moving executable to ~A" target-executable-path)
+        (mv target-executable-path (file work-dir "app.bin"))
+        (when (uiop:featurep :unix)
+          (shout "Ensure executable.")
+          (shell "chmod" "+x" target-executable-path)))
+
+      (shout "Preparing foreign libraries.")
+      (load (merge-pathnames "blobs.lisp" bundle-dir))
+
+      (shout "Bundling.")
+      (load (merge-pathnames "bundler.lisp" bundle-dir))
+      (shout "Done."))))

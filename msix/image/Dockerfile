@@ -15,9 +15,6 @@ RUN `
     # Install Build Tools with the Microsoft.VisualStudio.Workload.AzureBuildTools workload, excluding workloads and components with known issues.
     && (start /w vs_buildtools.exe --quiet --wait --norestart --nocache `
         --installPath "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\BuildTools" `
-        --add Microsoft.VisualStudio.Workload.VCTools `
-        --add Microsoft.VisualStudio.Workload.MSBuildTools `
-        --add Microsoft.VisualStudio.Workload.AzureBuildTools `
         --add Microsoft.VisualStudio.Component.Windows10SDK.19041 `
         --remove Microsoft.VisualStudio.Component.Windows10SDK.10240 `
         --remove Microsoft.VisualStudio.Component.Windows10SDK.10586 `
@@ -35,7 +32,7 @@ COPY provision.ps1 ./
 #
 RUN powershell -File ./provision.ps1
 
-COPY init.ps1 init.lisp ./
+COPY build.ps1 init.ps1 init.lisp ./
 
 #
 # INITIALIZE ENVIRONMENT
@@ -43,4 +40,4 @@ COPY init.ps1 init.lisp ./
 RUN powershell -File ./init.ps1
 
 
-ENTRYPOINT ["C:/Program Files/Steel Bank Common Lisp/sbcl.exe"]
+ENTRYPOINT ["powershell", "-File", "./build.ps1"]

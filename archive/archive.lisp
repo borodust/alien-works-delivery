@@ -17,10 +17,7 @@
                                    (awd:bundle-system-name bundle-def))))))
     (make-instance 'archive-bundle
                    :name output-name
-                   :output-filename (format nil
-                                            #+windows "~A.zip"
-                                            #-windows "~A.tar.gz"
-                                            output-name))))
+                   :output-filename output-name)))
 
 
 (defmethod awd:prepare-delivery-bundle ((bundle archive-bundle))
@@ -48,9 +45,7 @@
 
 (defmethod awd:delivery-bundle-executable-path ((bundle archive-bundle))
   (with-slots (name) bundle
-    (file name
-          #+windows "/app.exe"
-          #-windows "/app.bin")))
+    (file name "app.bin")))
 
 
 (defmethod awd:delivery-bundle-assembler-parameters ((bundle archive-bundle))

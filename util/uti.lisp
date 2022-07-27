@@ -256,5 +256,5 @@
 
 
 (defun provided-bundle-output-file ()
-  (uiop:if-let (out (uiop:getenv "ALIEN_WORKS_DELIVERY_BUNDLE_FILE"))
+  (uiop:if-let (out (uiop:getenv "ALIEN_WORKS_DELIVERY_BUNDLE_TARGET_FILE"))
     (file out)))
