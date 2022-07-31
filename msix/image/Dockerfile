@@ -25,19 +25,24 @@ RUN `
     # Cleanup
     && del /q vs_buildtools.exe
 
-COPY provision.ps1 ./
+COPY resources/provision.ps1 ./
 
 #
 # PROVISION ENVIRONMENT
 #
 RUN powershell -File ./provision.ps1
 
-COPY build.ps1 init.ps1 init.lisp ./
+COPY resources/init.ps1 resources/init.lisp ./
 
 #
 # INITIALIZE ENVIRONMENT
 #
 RUN powershell -File ./init.ps1
 
+#
+# COPY REST OF RESOURCES
+#
+COPY resources/build.ps1 resources/sign.ps1 resources/entrypoint.ps1 ./
 
-ENTRYPOINT ["powershell", "-File", "./build.ps1"]
+
+ENTRYPOINT ["powershell", "-File", "./entrypoint.ps1"]
