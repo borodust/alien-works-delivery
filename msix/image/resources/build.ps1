@@ -25,5 +25,9 @@ if ( "$Source" -like '*.zip' ) {
     exit 1
 }
 
-$env:ALIEN_WORKS_DELIVERY_BUNDLE_TARGET_DIR=$Target
-& 'C:/Program Files/Steel Bank Common Lisp/sbcl.exe' --script "$TmpWorkDir/delivery-bundle/deliver.lisp" $Type
+$Env:ALIEN_WORKS_DELIVERY_TARGET_DIR=$Target
+try {
+    & 'C:/Program Files/Steel Bank Common Lisp/sbcl.exe' --script "$TmpWorkDir/delivery-bundle/deliver.lisp" $Type
+} finally {
+    Remove-Item -LiteralPath @( "$TmpWorkFile", "$TmpWorkDir" ) -Force -Recurse
+}
