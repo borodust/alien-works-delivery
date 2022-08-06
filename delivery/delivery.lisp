@@ -13,10 +13,10 @@
 
 (defun extract-dependency-name (dependency-designator)
   (if (listp dependency-designator)
-      (extract-dependency-name (ecase (first dependency-designator)
-                                 (:version (second dependency-designator))
-                                 (:feature (third dependency-designator))
-                                 (:require (second dependency-designator))))
+      (ecase (first dependency-designator)
+        (:version (extract-dependency-name (second dependency-designator)))
+        (:feature (extract-dependency-name (third dependency-designator)))
+        (:require (values (extract-dependency-name (second dependency-designator)) t)))
       dependency-designator))
 
 
@@ -24,10 +24,12 @@
   (let ((dependency-table (make-hash-table :test 'equal)))
     (labels ((%collect-dependencies (system)
                (when system
-                 (loop for dep-name in (append (asdf:system-depends-on system)
-                                               (asdf:system-weakly-depends-on system)
-                                               (asdf:system-defsystem-depends-on system))
-                       for dep = (asdf:find-system (extract-dependency-name dep-name) t)
+                 (loop for dep-descriptor in (append (asdf:system-depends-on system)
+                                                     (asdf:system-weakly-depends-on system)
+                                                     (asdf:system-defsystem-depends-on system))
+                       for (dep-name require-p) = (multiple-value-list (extract-dependency-name dep-descriptor))
+                       for dep = (unless require-p
+                                   (asdf:find-system dep-name t))
                        when dep
                          do (let ((proper-dep-name (asdf:component-name dep)))
                               (when (not (gethash proper-dep-name dependency-table))
