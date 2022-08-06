@@ -125,7 +125,8 @@
       (shell "Copy-Item"
              "-LiteralPath" (format nil "~{\"~A\"~^,~}" (list* source sources))
              "-Destination" destination
-             "-Recurse")
+             "-Recurse"
+             "-Force")
       (apply #'shell
              "/bin/cp" "-LR"
              (append
