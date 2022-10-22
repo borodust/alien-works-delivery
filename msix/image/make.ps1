@@ -1,1 +1,1 @@
-docker build -t alien-works-delivery-msix -f $PSScriptRoot/Dockerfile $PSScriptRoot
+docker build -t registry.awie.club/alien-works-delivery-msix -f $PSScriptRoot/Dockerfile $PSScriptRoot

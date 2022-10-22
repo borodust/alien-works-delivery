@@ -42,7 +42,8 @@ RUN powershell -File ./init.ps1
 #
 # COPY REST OF RESOURCES
 #
+WORKDIR C:/
 COPY resources/build.ps1 resources/sign.ps1 resources/entrypoint.ps1 ./
 
 
-ENTRYPOINT ["powershell", "-File", "./entrypoint.ps1"]
+ENTRYPOINT ["powershell", "-File", "C:/entrypoint.ps1"]
